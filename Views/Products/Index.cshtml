@@ -1,0 +1,56 @@
+﻿@using PagedList.Mvc
+@model PagedList.IPagedList<INF272_HW06.Models.product>
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Products</h2>
+<table class="table table-primary table-dark table-striped ">
+    <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Year</th>
+            <th scope="col">Price</th>
+            <th scope="col">Brand</th>
+            <th scope="col">Category</th>
+        </tr>
+    </thead>
+    <tbody id="tableBody">
+    </tbody>
+</table>
+
+
+
+@section scripts {
+    <script>
+        $(document).ready(() => {
+
+            // Get all Prodcuts
+            GetProducts();
+            function GetProducts() {
+                $.get({
+                    url: "@Url.Action("GetProducts", "Products")",
+                    success: (data, status) => {
+                        let productsData = JSON.parse(data);
+
+                        console.log(productsData);
+
+                        $("#tableBody").empty();
+
+                        $(productsData).each((i, element) => {
+                            $("#tableBody").append(`<tr data-id="${element.id}"><td>${element.name}</td> <td>${element.model}</td><td>${element.price}</td><td>${element.brand}</td><td>${element.category}</td></tr>`)
+                        });
+
+
+                    }
+                });
+            }
+        });
+    </script>
+
+}
+
+@Html.PagedListPager(Model, i => Url.Action("Index","Products", new { i, search=Request.QueryString["search"]}))
+
+
+

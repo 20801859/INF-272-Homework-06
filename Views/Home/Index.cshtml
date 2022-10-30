@@ -1,0 +1,384 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<style>
+    .modal-dialog {
+        display: inline-block;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .modal {
+        text-align: center;
+        padding: 0 !important;
+    }
+
+        .modal:before {
+            content: '';
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+            margin-right: -4px;
+        }
+
+    .modal-dialog {
+        display: inline-block;
+        text-align: left;
+        vertical-align: middle;
+    }
+</style>
+
+<h2>Products</h2>
+<form>
+    <div class="row">
+        <div class="col-lg-3 form-group">
+            <input type="text" class="form-control" id="text" placeholder="Enter Product Name">
+        </div>
+
+        <div class="col-lg-1 form-group">
+            <input type="button" class="form-control btn-success" onclick="Search()" value="Search">
+        </div>
+        <div class="col-lg-1 form-group">
+            <input type="button" class="form-control btn-primary" onclick="Create()" value="Create">
+        </div>
+
+    </div>
+</form>
+
+
+<table class="table table-primary table-dark table-striped ">
+    <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Year</th>
+            <th scope="col">Price</th>
+            <th scope="col">Brand</th>
+            <th scope="col">Category</th>
+
+        </tr>
+    </thead>
+    <tbody id="tableBody">
+    </tbody>
+</table>
+
+@*Bootstrap modal*@
+<div class="modal fade modal-dialog-centered" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="partialView">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="Update()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-dialog-centered" id="exampleModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="partialView2">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="AddToDatabase()">Confirm Creation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function Search() {
+            var text = $('#text').val();
+                $.get({
+                    url: "@Url.Action("Search", "Home")",
+                    data: {
+                        text: text
+                    },
+                    success: (data) => {
+                        let productsData = JSON.parse(data);
+                        $("#tableBody").empty();
+                        $(productsData).each((i, element) => {
+                            $("#tableBody").append(`<tr data-id="${element.id}">
+                             <td>${element.name}</td>
+                             <td>${element.model}</td>
+                             <td>${element.price}</td>
+                             <td>${element.brand}</td>
+                             <td>${element.category}</td>
+                             <td><button type="button" class="btn btn-primary btn-update" onclick="edit(${element.id})" data-id="${element.id}" >Edit</button></td>
+                             <td><button class="btn btn-primary" id="btn-details"  onclick="ProductInfo(${element.id})">Details</button></td>"
+                             <td><button class="btn btn-danger" id="btn-delete"  onclick="Delete(${element.id})">Delete</button></td>
+                             </tr>`)
+                        });
+                    }
+                });
+            }
+
+
+        function Delete(myid) {
+
+             $.get({
+                    url: "@Url.Action("DeleteConfirmed", "Products")",
+                    data: {
+                        id: myid,
+
+                    },
+                 success: (data) => {
+                    $.get({
+                    url: "@Url.Action("GetProducts", "Home")",
+                    success: (data) => {
+                        let productsData = JSON.parse(data);
+                        $("#tableBody").empty();
+                        $(productsData).each((i, element) => {
+                            $("#tableBody").append(`<tr data-id="${element.id}">
+                             <td>${element.name}</td>
+                             <td>${element.model}</td>
+                             <td>${element.price}</td>
+                             <td>${element.brand}</td>
+                             <td>${element.category}</td>
+                             <td><button type="button" class="btn btn-primary btn-update" onclick="edit(${element.id})" data-id="${element.id}" >Edit</button></td>
+                             <td><button class="btn btn-primary" id="btn-details"  onclick="ProductInfo(${element.id})">Details</button></td>"
+                             <td><button class="btn btn-danger" id="btn-delete"  onclick="Delete(${element.id})">Delete</button></td>
+                             </tr>`)
+                        });
+                    }
+                });
+
+                    }
+             });
+        }
+
+
+        function Update() {
+        console.log("The ID is: " + parseInt($('#id').val()));
+            $.get({
+                url: "@Url.Action("Edit", "products")",
+
+                data: {
+
+                    product_id: parseInt($('#id').val()),
+                    product_name: $('#name').val(),
+                    category_id: parseInt($('#catergorySelect').val()),
+                    list_price: parseFloat($('#price').val()),
+                    brand_id: parseInt($('#brand-select').val()),
+                    model_year: parseInt($('#model').val())
+
+
+                },
+                success: (data, status) => {
+                    $('#exampleModal').modal('hide')
+                    GetProducts();
+
+                }
+            })
+        }
+
+         @*function AddToDatabase() {
+
+            $.get({
+                url: "@Url.Action("AddFinal", "Products")",
+
+                data: {
+
+                    product_id: parseInt($('#id').val()),
+                    product_name: $('#name').val(),
+                    category_id: parseInt($('#catergorySelect').val()),
+                    list_price: parseFloat($('#price').val()),
+                    brand_id: parseInt($('#brand-select').val()),
+                    model_year: parseInt($('#model').val())
+
+
+                },
+                success: (data, status) => {
+                    $('#exampleModal').modal('hide')
+                    GetProducts();
+
+                }
+            })
+    }*@
+
+        function Create() {
+
+        $('#exampleModal2').modal('toggle');
+            $('#partialView2').load('/products/EditView');
+
+        console.log("Create the called");
+             $.get({
+                    url: "@Url.Action("Create", "Home")",
+                    data: {
+                        id: 1,
+                    },
+                 success: (data, status) => {
+                     console.log("Success!!");
+                     let productsData = JSON.parse(data);
+                     $('#id').val("")
+
+                     $('#name').val();
+                     $("#catergorySelect").empty();
+                     $("#catergorySelect").append(`<option value="${productsData.id}">${productsData.catergory}</option>`);
+                     FillCatergorySelect();
+                     $('#price').val();
+
+                     $("#brand-select").empty();
+                     $("#brand-select").append(`<option value="${productsData.id}">${productsData.brand}</option>`);
+                     $('#model').val();
+                     GetBrandData()
+                    }
+             });
+
+
+    }
+
+        function ProductInfo(myid) {
+            $('#exampleModal').modal('toggle');
+            $('#partialView').load('/Products/Details');
+
+             $.get({
+                    url: "@Url.Action("ProductDetails", "Home")",
+                    data: {
+                        id: myid,
+
+                    },
+                 success: (data) => {
+
+                     let product = JSON.parse(data);
+
+                     $('#name').html(product.productname);
+                     $('#year').html(product.year);
+                     $('#price').html(product.price);
+                     $('#category').html(product.category);
+                     $('#brand').html(product.brand);
+
+                     $(product.stores).each((i, e) => {
+                         console.log(e)
+                         $('#stores').append(`<tr><td>${e.storename}</td><td>${e.quantity}</td></tr>`)
+                     })
+
+                    }
+             });
+        }
+
+        function edit(myid) {
+            $('#exampleModal').modal('toggle');
+            $('#partialView').load('/Products/EditView');
+            var Id = parseInt(myid)
+            console.log(myid)
+             $.get({
+                    url: "@Url.Action("EditProd", "Products")",
+                    data: {
+                        id: myid,
+                    },
+                 success: (data, status) => {
+                     let productsData = JSON.parse(data);
+                     $('#id').val(productsData.id)
+                     $('#name').val(productsData.name);
+                     $("#categorySelect").empty();
+                     $("#categorySelect").append(`<option value="${productsData.id}">${productsData.category}</option>`);
+                     FillCategorySelect();
+                     $('#price').val(productsData.price);
+                     $("#brand-select").empty();
+                     $("#brand-select").append(`<option value="${productsData.id}">${productsData.brand}</option>`);
+                     console.log(productsData);
+                     $('#model').val(productsData.model);
+                     GetBrandData()
+                    }
+             });
+
+
+        }
+
+        function FillCategorySelect() {
+
+                 $.get({
+                    url: "@Url.Action("GetCategoryNames", "Home")",
+                    success: (data) => {
+                        let productData = JSON.parse(data);
+
+                        console.log(productData[1]);
+
+
+
+                        $(productData).each((i, e) => {
+                            $("#categorySelect").append(`<option value="${e.id}">${e.name}</option>`);
+                        });
+                    }
+                });
+
+        }
+
+        function GetBrandData() {
+                $.get({
+                    url: "@Url.Action("GetBrandData", "Home")",
+                    method: "GET",
+                    success: (data, status) => {
+                        console.log(data);
+                        console.log(status);
+
+                        let inData = JSON.parse(data);
+                        let select = $("#brand-select");
+
+                        $(inData).each((i, v) => {
+                            select.append(`<option value="${v.brand_id}">${v.brand_name}</option>`);
+                        });
+                    }
+                });
+            }
+
+
+        $(document).ready(() => {
+
+
+            //Get products function
+            GetProducts();
+            function GetProducts() {
+                $.get({
+                    url: "@Url.Action("GetProducts", "Home")",
+                    success: (data) => {
+                        let productsData = JSON.parse(data);
+                        $("#tableBody").empty();
+                        $(productsData).each((i, element) => {
+                            $("#tableBody").append(`<tr data-id="${element.id}">
+                             <td>${element.name}</td>
+                             <td>${element.model}</td>
+                             <td>${element.price}</td>
+                             <td>${element.brand}</td>
+                             <td>${element.category}</td>
+                             <td><button type="button" class="btn btn-primary btn-update" onclick="edit(${element.id})" data-id="${element.id}" >Edit</button></td>
+                             <td><button class="btn btn-primary" id="btn-details"  onclick="ProductInfo(${element.id})">Details</button></td>"
+                             <td><button class="btn btn-danger" id="btn-delete"  onclick="Delete(${element.id})">Delete</button></td>
+                             </tr>`)
+                        });
+                    }
+                });
+            }
+
+
+
+
+        });
+
+
+
+    </script>
+}
